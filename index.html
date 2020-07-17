@@ -65,6 +65,16 @@
         .slider.round:before {
             border-radius: 50%;
         }
+
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            background-color: #DFDFDF;
+            color: black;
+            text-align: center;
+        }
     </style>
     <script>
         var allData = {};
@@ -85,7 +95,7 @@
             var datPointsRecovered = makeData(allData, country, totalFlag, "recovered")
             var datPointsActive = makeData(allData, country, totalFlag, "active")
             generateGraph(name + " in " + country, datPointsConfirmed, datPointsDeaths,
-                datPointsRecovered,datPointsActive)
+                datPointsRecovered, datPointsActive)
         }
 
         function makeData(data, country, totalFlag, parameter) {
@@ -97,7 +107,7 @@
                     datObj = {}
                     datObj.x = toTimestamp(data[country][i]["date"]);
                     yparam = (data[country][i][parameter])
-                    datObj.y = ((yparam == Infinity)||(yparam<0)) ? 0 : yparam
+                    datObj.y = ((yparam == Infinity) || (yparam < 0)) ? 0 : yparam
 
                     datPoints.push(datObj)
                 }
@@ -108,7 +118,7 @@
                     datObj = {}
                     datObj.x = toTimestamp(data[country][i]["date"]);
                     yparam = (data[country][i][parameter] - data[country][i - 1][parameter])
-                    datObj.y = ((yparam == Infinity)||(yparam<0)) ? 0 : yparam
+                    datObj.y = ((yparam == Infinity) || (yparam < 0)) ? 0 : yparam
 
                     datPoints.push(datObj)
                 }
@@ -117,8 +127,8 @@
             }
         }
 
-        function generateGraph(name, datPointsConfirmed, datPointsDeaths, datPointsRecovered,datPointsActive) {
-            var confirmedChart = new CanvasJS.Chart("chartTemperature", {
+        function generateGraph(name, datPointsConfirmed, datPointsDeaths, datPointsRecovered, datPointsActive) {
+            var confirmedChart = new CanvasJS.Chart("covidChart", {
                 zoomEnabled: true,
                 title: {
                     text: name
@@ -188,15 +198,17 @@
         }
         window.onload = function () {
             $.getJSON('https://pomber.github.io/covid19/timeseries.json', function (data, status, xhr) {
-                
+
                 let countryNames = Object.keys(data)
                 var output = [];
-                for(let countries in data){
+                for (let countries in data) {
                     output.push('<option value="' + countries + '">' + countries + '</option>');
-                    for(let day in data[countries]){
-                        var dayRecord=data[countries][day]
-                        var activeCases=data[countries][day]["confirmed"]-(data[countries][day]["deaths"]+data[countries][day]["recovered"])
-                        data[countries][day]["active"]=activeCases>0?activeCases:0
+                    for (let day in data[countries]) {
+                        var dayRecord = data[countries][day]
+                        var activeCases = data[countries][day]["confirmed"] - (data[countries][day][
+                            "deaths"
+                        ] + data[countries][day]["recovered"])
+                        data[countries][day]["active"] = activeCases > 0 ? activeCases : 0
                     }
                 }
                 console.log(data)
@@ -226,7 +238,7 @@
                 var datPointsRecovered = makeData(allData, country, totalFlag, "recovered")
                 var datPointsActive = makeData(allData, country, totalFlag, "active")
                 generateGraph(name + " in " + country, datPointsConfirmed, datPointsDeaths,
-                    datPointsRecovered,datPointsActive)
+                    datPointsRecovered, datPointsActive)
             })
 
 
@@ -246,7 +258,7 @@
 </head>
 
 <body>
-    <div id="chartTemperature" style="height: 370px; width: 100%;"></div>
+    <div id="covidChart" style="height: 370px; width: 100%;"></div>
     <div>
         <table>
             <tr>
@@ -265,6 +277,10 @@
                 <td>Total</td>
             </tr>
         </table>
+    </div>
+
+    <div class="footer">
+        <p>Special thanks to <a style="color:#0645AD" href="https://github.com/pomber">@Rodrigo Pombo</a> for the data and <a style="color:#0645AD" href="https://canvasjs.com/">CanvasJS</a> for the chart plugin</p>
     </div>
 </body>
 
