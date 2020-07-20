@@ -161,11 +161,11 @@
                     type: "line",
                     //type=area for area
                     markerSize: 0,
-                    name: 'deaths',
+                    name: 'active',
                     showInLegend: true,
                     xValueType: "dateTime",
-                    color: 'red',
-                    dataPoints: datPointsDeaths
+                    color: 'RoyalBlue',
+                    dataPoints: datPointsActive
                 }, {
                     type: "line",
                     //type=area for area
@@ -175,16 +175,16 @@
                     xValueType: "dateTime",
                     color: 'green',
                     dataPoints: datPointsRecovered
-                }, {
+                },{
                     type: "line",
                     //type=area for area
                     markerSize: 0,
-                    name: 'active',
+                    name: 'deaths',
                     showInLegend: true,
                     xValueType: "dateTime",
-                    color: 'RoyalBlue',
-                    dataPoints: datPointsActive
-                }]
+                    color: 'red',
+                    dataPoints: datPointsDeaths
+                } ]
             });
             confirmedChart.render();
         }
