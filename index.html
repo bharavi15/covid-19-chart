@@ -1,287 +1,257 @@
-<html>
+<html lang="html">
 
 <head>
-    <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <style>
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
+	<script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+	<script src="https://canvasjs.com/assets/script/canvasjs.min.js"> </script>
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<style>
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 60px;
+			height: 34px;
+		}
 
-        /* Hide default HTML checkbox */
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+		/* Hide default HTML checkbox */
+		.switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
 
-        /* The slider */
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
+		/* The slider */
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #ccc;
+			-webkit-transition: .4s;
+			transition: .4s;
+		}
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            -webkit-transition: .4s;
-            transition: .4s;
-        }
+		.slider:before {
+			position: absolute;
+			content: "";
+			height: 26px;
+			width: 26px;
+			left: 4px;
+			bottom: 4px;
+			background-color: white;
+			-webkit-transition: .4s;
+			transition: .4s;
+		}
 
-        input:checked+.slider {
-            background-color: #2196F3;
-        }
+		input:checked+.slider {
+			background-color: #2196F3;
+		}
 
-        input:focus+.slider {
-            box-shadow: 0 0 1px #2196F3;
-        }
+		input:focus+.slider {
+			box-shadow: 0 0 1px #2196F3;
+		}
 
-        input:checked+.slider:before {
-            -webkit-transform: translateX(26px);
-            -ms-transform: translateX(26px);
-            transform: translateX(26px);
-        }
+		input:checked+.slider:before {
+			-webkit-transform: translateX(26px);
+			-ms-transform: translateX(26px);
+			transform: translateX(26px);
+		}
 
-        /* Rounded sliders */
-        .slider.round {
-            border-radius: 34px;
-        }
+		/* Rounded sliders */
+		.slider.round {
+			border-radius: 34px;
+		}
 
-        .slider.round:before {
-            border-radius: 50%;
-        }
+		.slider.round:before {
+			border-radius: 50%;
+		}
 
-        .footer {
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            background-color: #DFDFDF;
-            color: black;
-            text-align: center;
-        }
-    </style>
-    <script>
-        var allData = {};
+		.footer {
+			position: fixed;
+			left: 0;
+			bottom: 0;
+			width: 100%;
+			background-color: #DFDFDF;
+			color: black;
+			text-align: center;
+		}
 
-        function renderChanges() {
-            console.log("renderChanges called")
-            var country = $('#countrySelector').find(":selected").text();
-            var parameter = $('#countSelector').find(":selected").text();
-            var totalFlag = $('#totalFlag').is(":checked");
-            var name = ""
-            if (totalFlag) {
-                name = "Total cases"
-            } else {
-                name = "Cases Per day"
-            }
-            var datPointsConfirmed = makeData(allData, country, totalFlag, "confirmed")
-            var datPointsDeaths = makeData(allData, country, totalFlag, "deaths")
-            var datPointsRecovered = makeData(allData, country, totalFlag, "recovered")
-            var datPointsActive = makeData(allData, country, totalFlag, "active")
-            generateGraph(name + " in " + country, datPointsConfirmed, datPointsDeaths,
-                datPointsRecovered, datPointsActive)
-        }
+		.center {
+			margin: 0 auto
+		}
+	</style>
+	<script>
+		var allData = {};
 
-        function makeData(data, country, totalFlag, parameter) {
-            var datPoints = [],
-                datObj = {},
-                yparam;
-            if (totalFlag) {
-                for (let i = 1; i < data[country].length; i++) {
-                    datObj = {}
-                    datObj.x = toTimestamp(data[country][i]["date"]);
-                    yparam = (data[country][i][parameter])
-                    datObj.y = ((yparam == Infinity) || (yparam < 0)) ? 0 : yparam
+		function renderChanges() {
+			console.log("renderChanges called")
+			var country = $('#countrySelector').find(":selected").text();
+			var totalFlag = $('#totalFlag').is(":checked");
+			var name = totalFlag ? "Total cases" : "Cases Per day"
+			generateGraph(name + " in " + country, generateData(allData, country, totalFlag, name))
+		}
 
-                    datPoints.push(datObj)
-                }
-                console.log(datPoints)
-                return datPoints
-            } else {
-                for (let i = 1; i < data[country].length; i++) {
-                    datObj = {}
-                    datObj.x = toTimestamp(data[country][i]["date"]);
-                    yparam = (data[country][i][parameter] - data[country][i - 1][parameter])
-                    datObj.y = ((yparam == Infinity) || (yparam < 0)) ? 0 : yparam
+		function makeData(data, country, totalFlag, parameter) {
+			var datPoints = [],
+				datObj = {},
+				yparam;
+			if (totalFlag) {
+				for (let i = 1; i < data[country].length; i++) {
+					datObj = {}
+					datObj.x = toTimestamp(data[country][i]["date"]);
+					yparam = (data[country][i][parameter])
+					datObj.y = ((yparam == Infinity) || (yparam < 0)) ? 0 : yparam
 
-                    datPoints.push(datObj)
-                }
-                console.log(datPoints)
-                return datPoints
-            }
-        }
+					datPoints.push(datObj)
+				}
+			} else {
+				for (let i = 1; i < data[country].length; i++) {
+					datObj = {}
+					datObj.x = toTimestamp(data[country][i]["date"]);
+					yparam = (data[country][i][parameter] - data[country][i - 1][parameter])
+					datObj.y = ((yparam == Infinity) || (yparam < 0)) ? 0 : yparam
 
-        function generateGraph(name, datPointsConfirmed, datPointsDeaths, datPointsRecovered, datPointsActive) {
-            var confirmedChart = new CanvasJS.Chart("covidChart", {
-                zoomEnabled: true,
-                title: {
-                    text: name
-                },
-                axisX: {
-                    title: "Date"
-                },
-                axisY: {
-                    title: "Cases"
-                },
-                toolTip: {
-                    shared: true
-                },
-                legend: {
-                    cursor: "pointer",
-                    verticalAlign: "top",
-                    horizontalAlign: "center",
-                    dockInsidePlotArea: true,
-                    itemclick: toogleDataSeries
-                },
-                data: [{
-                    type: "line",
-                    //type=area for area
-                    markerSize: 0,
-                    name: 'confirmed',
-                    showInLegend: true,
-                    xValueType: "dateTime",
-                    dataPoints: datPointsConfirmed
-                }, {
-                    type: "line",
-                    //type=area for area
-                    markerSize: 0,
-                    name: 'deaths',
-                    showInLegend: true,
-                    xValueType: "dateTime",
-                    color: 'red',
-                    dataPoints: datPointsDeaths
-                }, {
-                    type: "line",
-                    //type=area for area
-                    markerSize: 0,
-                    name: 'recovered',
-                    showInLegend: true,
-                    xValueType: "dateTime",
-                    color: 'green',
-                    dataPoints: datPointsRecovered
-                }, {
-                    type: "line",
-                    //type=area for area
-                    markerSize: 0,
-                    name: 'active',
-                    showInLegend: true,
-                    xValueType: "dateTime",
-                    color: 'RoyalBlue',
-                    dataPoints: datPointsActive
-                }]
-            });
-            confirmedChart.render();
-        }
+					datPoints.push(datObj)
+				}
+			}
+			return datPoints
+		}
 
-        function toTimestamp(dateString) {
-            var d = new Date()
-            d.setTime(0)
-            dateArr = dateString.split('-')
-            d.setFullYear(parseInt(dateArr[0]), parseInt(dateArr[1]) - 1, parseInt(dateArr[2]))
-            return d.getTime()
-        }
-        window.onload = function () {
-            $.getJSON('https://pomber.github.io/covid19/timeseries.json', function (data, status, xhr) {
+		function generateGraph(name, dataPointsArray) {
+			var chartConfig = {
+				zoomEnabled: true,
+				title: {
+					text: name
+				},
+				axisX: {
+					title: "Date"
+				},
+				axisY: {
+					title: "Cases"
+				},
+				toolTip: {
+					shared: true
+				},
+				legend: {
+					cursor: "pointer",
+					verticalAlign: "top",
+					horizontalAlign: "center",
+					itemclick: toogleDataSeries
+				},
+				data: dataPointsArray
+			}
+			var confirmedChart = new CanvasJS.Chart("covidChart", chartConfig);
+			confirmedChart.render();
+		}
 
-                let countryNames = Object.keys(data)
-                var output = [];
-                for (let countries in data) {
-                    output.push('<option value="' + countries + '">' + countries + '</option>');
-                    for (let day in data[countries]) {
-                        var dayRecord = data[countries][day]
-                        var activeCases = data[countries][day]["confirmed"] - (data[countries][day][
-                            "deaths"
-                        ] + data[countries][day]["recovered"])
-                        data[countries][day]["active"] = activeCases > 0 ? activeCases : 0
-                    }
-                }
-                console.log(data)
-                allData = data;
-                // $.each(data, function (key, value) {
-                //     output.push('<option value="' + key + '">' + key + '</option>');
-                //     for(let day in value){
-                //         value[day]
-                //     }
-                // });
-                $('#countrySelector').html(output.join(''));
+		function toTimestamp(dateString) {
+			var d = new Date()
+			d.setTime(0)
+			dateArr = dateString.split('-')
+			d.setFullYear(parseInt(dateArr[0]), parseInt(dateArr[1]) - 1, parseInt(dateArr[2]))
+			return d.getTime()
+		}
+		$(document).ready(function () {
+			$.getJSON('https://pomber.github.io/covid19/timeseries.json', function (data, status, xhr) {
 
-                $('#countrySelector').val('India')
+				let countryNames = Object.keys(data)
+				var output = [];
+				for (let countries in data) {
+					output.push('<option value="' + countries + '">' + countries + '</option>');
+					for (let day in data[countries]) {
+						var dayRecord = data[countries][day]
+						var activeCases = data[countries][day]["confirmed"] - (data[countries][day][
+							"deaths"
+						] + data[countries][day]["recovered"])
+						data[countries][day]["active"] = activeCases > 0 ? activeCases : 0
+					}
+				}
+				//console.log(data)
+				allData = data;
 
-                var country = "India"
-                var parameter = "confirmed"
-                $('#totalFlag').attr("checked", true);
-                var totalFlag = true
-                var name = ""
-                if (totalFlag) {
-                    name = "Total cases"
-                } else {
-                    name = "Cases Per day"
-                }
-                var datPointsConfirmed = makeData(allData, country, totalFlag, "confirmed")
-                var datPointsDeaths = makeData(allData, country, totalFlag, "deaths")
-                var datPointsRecovered = makeData(allData, country, totalFlag, "recovered")
-                var datPointsActive = makeData(allData, country, totalFlag, "active")
-                generateGraph(name + " in " + country, datPointsConfirmed, datPointsDeaths,
-                    datPointsRecovered, datPointsActive)
-            })
+				$('#countrySelector').html(output.join(''));
+				$('#countrySelector').val('India')
+				var country = "India"
+				var parameter = "confirmed"
+				var totalFlag = true
+				$('#totalFlag').attr("checked", totalFlag);
+				var name = totalFlag ? "Total cases" : "Cases Per day"
 
+				generateGraph(name + " in " + country, generateData(allData, country, totalFlag, name))
+			})
+		})
 
-        }
+		function generateData(allData, country, totalFlag, name) {
+			var datPointsConfirmed = makeData(allData, country, totalFlag, "confirmed")
+			var datPointsDeaths = makeData(allData, country, totalFlag, "deaths")
+			var datPointsRecovered = makeData(allData, country, totalFlag, "recovered")
+			var datPointsActive = makeData(allData, country, totalFlag, "active")
 
+			var dataPointsArray = [{
+				name: 'confirmed',
+				color: 'blue',
+				dataPoints: datPointsConfirmed
+			}, {
+				name: 'deaths',
+				color: 'red',
+				dataPoints: datPointsDeaths
+			}, {
+				name: 'recovered',
+				color: 'green',
+				dataPoints: datPointsRecovered
+			}, {
+				name: totalFlag ? 'active' : 'new',
+				color: 'RoyalBlue',
+				dataPoints: datPointsActive
+			}]
+			for (let i in dataPointsArray) {
+				dataPointsArray[i].type = "line"
+				dataPointsArray[i].markerSize = 0
+				dataPointsArray[i].showInLegend = true
+				dataPointsArray[i].xValueType = "dateTime"
+			}
+			return dataPointsArray;
+		}
 
-        function toogleDataSeries(e) {
-            if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-                e.dataSeries.visible = false;
-            } else {
-                e.dataSeries.visible = true;
-            }
-            chart.render();
-        }
-    </script>
-    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"> </script>
+		function toogleDataSeries(e) {
+			if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+				e.dataSeries.visible = false;
+			} else {
+				e.dataSeries.visible = true;
+			}
+			e.chart.render();
+		}
+	</script>
 </head>
 
 <body>
-    <div id="covidChart" style="height: 370px; width: 100%;"></div>
-    <div>
-        <table>
-            <tr>
-                <td>Country Name:</td>
-                <td><select id="countrySelector" onchange="renderChanges()"></select></td>
-            </tr>
-        </table>
-        <table>
-            <tr>
-                <td>Per Day</td>
-                <td><label class="switch">
-                        <input id="totalFlag" type="checkbox" onchange="renderChanges()">
-                        <span class="slider round"></span>
-                    </label>
-                </td>
-                <td>Total</td>
-            </tr>
-        </table>
-    </div>
+	<div id="covidChart" style="height: 370px; width: 100%;"></div>
 
-    <div class="footer">
-        <p>Special thanks to <a style="color:#0645AD" href="https://github.com/pomber">@Rodrigo Pombo</a> for the data and <a style="color:#0645AD" href="https://canvasjs.com/">CanvasJS</a> for the chart plugin</p>
-    </div>
+	<div>
+		<table class="center">
+			<tr>
+				<td>Country Name:</td>
+				<td><select id="countrySelector" onchange="renderChanges()"></select>
+				</td>
+			</tr>
+		</table>
+		<table class="center">
+			<tr>
+				<td>Per Day</td>
+				<td><label class="switch">
+						<input id="totalFlag" type="checkbox" onchange="renderChanges()">
+						<span class="slider round"></span>
+					</label>
+				</td>
+				<td>Total</td>
+			</tr>
+		</table>
+	</div>
+	<div class="footer">
+		<p>Special thanks to <a style="color:#0645AD" href="https://github.com/pomber">@Rodrigo Pombo</a> for the data
+			and <a style="color:#0645AD" href="https://canvasjs.com/">CanvasJS</a> for the chart plugin</p>
+	</div>
 </body>
 
 </html>
