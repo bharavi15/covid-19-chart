@@ -78,18 +78,40 @@
 		}
 
 		.center {
-			margin: 0 auto
+			margin: auto
+		}
+
+		.header {
+			padding: 10px 16px;
+			background: #555;
+			color: #f1f1f1;
+			text-align: center
+		}
+
+		.content {
+			padding: 16px;
+		}
+
+		.sticky {
+			position: fixed;
+			top: 0;
+			width: 100%;
+		}
+
+		.sticky+.content {
+			padding-top: 102px;
 		}
 	</style>
 	<script>
 		var allData = {};
+		var chartCount = 0;
 
-		function renderChanges() {
+		function renderChanges(id) {
 			console.log("renderChanges called")
-			var country = $('#countrySelector').find(":selected").text();
-			var totalFlag = $('#totalFlag').is(":checked");
+			var country = $('#countrySelector' + id).find(":selected").text();
+			var totalFlag = $('#totalFlag' + id).is(":checked");
 			var name = totalFlag ? "Total cases" : "Cases Per day"
-			generateGraph(name + " in " + country, generateData(allData, country, totalFlag, name))
+			generateGraph(id, name + " in " + country, generateData(allData, country, totalFlag))
 		}
 
 		function makeData(data, country, totalFlag, parameter) {
@@ -118,7 +140,7 @@
 			return datPoints
 		}
 
-		function generateGraph(name, dataPointsArray) {
+		function generateGraph(id, name, dataPointsArray) {
 			var chartConfig = {
 				zoomEnabled: true,
 				title: {
@@ -141,7 +163,7 @@
 				},
 				data: dataPointsArray
 			}
-			var confirmedChart = new CanvasJS.Chart("covidChart", chartConfig);
+			var confirmedChart = new CanvasJS.Chart("covidChart" + id, chartConfig);
 			confirmedChart.render();
 		}
 
@@ -154,35 +176,36 @@
 		}
 		$(document).ready(function () {
 			$.getJSON('https://pomber.github.io/covid19/timeseries.json', function (data, status, xhr) {
-
-				let countryNames = Object.keys(data)
-				var output = [];
-				for (let countries in data) {
-					output.push('<option value="' + countries + '">' + countries + '</option>');
-					for (let day in data[countries]) {
-						var dayRecord = data[countries][day]
-						var activeCases = data[countries][day]["confirmed"] - (data[countries][day][
-							"deaths"
-						] + data[countries][day]["recovered"])
-						data[countries][day]["active"] = activeCases > 0 ? activeCases : 0
-					}
-				}
 				//console.log(data)
 				allData = data;
-
-				$('#countrySelector').html(output.join(''));
-				$('#countrySelector').val('India')
-				var country = "India"
-				var parameter = "confirmed"
-				var totalFlag = true
-				$('#totalFlag').attr("checked", totalFlag);
-				var name = totalFlag ? "Total cases" : "Cases Per day"
-
-				generateGraph(name + " in " + country, generateData(allData, country, totalFlag, name))
+				addChart()
 			})
 		})
 
-		function generateData(allData, country, totalFlag, name) {
+		function initGraphData(id) {
+			var output = [];
+			for (let countries in allData) {
+				output.push('<option value="' + countries + '">' + countries + '</option>');
+				for (let day in allData[countries]) {
+					var dayRecord = allData[countries][day]
+					var activeCases = allData[countries][day]["confirmed"] - (allData[countries][day][
+						"deaths"
+					] + allData[countries][day]["recovered"])
+					allData[countries][day]["active"] = activeCases > 0 ? activeCases : 0
+				}
+			}
+			$('#countrySelector' + id).html(output.join(''));
+			$('#countrySelector' + id).val('India')
+			var country = "India"
+			var parameter = "confirmed"
+			var totalFlag = true
+			$('#totalFlag' + id).attr("checked", totalFlag);
+			var name = totalFlag ? "Total cases" : "Cases Per day"
+
+			generateGraph(id, name + " in " + country, generateData(allData, country, totalFlag))
+		}
+
+		function generateData(allData, country, totalFlag) {
 			var datPointsConfirmed = makeData(allData, country, totalFlag, "confirmed")
 			var datPointsDeaths = makeData(allData, country, totalFlag, "deaths")
 			var datPointsRecovered = makeData(allData, country, totalFlag, "recovered")
@@ -222,32 +245,43 @@
 			}
 			e.chart.render();
 		}
+
+		function addChart() {
+			var idno = chartCount++;
+			$('#main').append(`
+				<div id="covidChart${idno}" style="height: 370px; width: ${idno==0?99:100}%;"></div>
+				<div style="padding-bottom:1em">
+					<table class="center">
+						<tr>
+							<td>Country Name:</td>
+							<td><select id="countrySelector${idno}" onchange="renderChanges(${idno})"></select>
+							</td>
+						</tr>
+					</table>
+					<table class="center">
+						<tr>
+							<td>Per Day</td>
+							<td><label class="switch">
+									<input id="totalFlag${idno}" type="checkbox" onchange="renderChanges(${idno})">
+									<span class="slider round"></span>
+								</label>
+							</td>
+							<td>Total</td>
+						</tr>
+					</table>
+				</div><hr>`)
+			initGraphData(idno)
+		}
 	</script>
 </head>
 
 <body>
-	<div id="covidChart" style="height: 370px; width: 100%;"></div>
-
-	<div>
-		<table class="center">
-			<tr>
-				<td>Country Name:</td>
-				<td><select id="countrySelector" onchange="renderChanges()"></select>
-				</td>
-			</tr>
-		</table>
-		<table class="center">
-			<tr>
-				<td>Per Day</td>
-				<td><label class="switch">
-						<input id="totalFlag" type="checkbox" onchange="renderChanges()">
-						<span class="slider round"></span>
-					</label>
-				</td>
-				<td>Total</td>
-			</tr>
-		</table>
+	<div class="header center" id="myHeader">
+		<button class="w3-green" style="cursor: pointer; float: left;font-size: 2em;" id="addChartButton"
+			onclick="addChart()">Add Chart</button>
+		<h2 style="margin: auto;margin-left: -10%">COVID-19 Chart</h2>
 	</div>
+	<div id="main"></div>
 	<div class="footer">
 		<p>Special thanks to <a style="color:#0645AD" href="https://github.com/pomber">@Rodrigo Pombo</a> for the data
 			and <a style="color:#0645AD" href="https://canvasjs.com/">CanvasJS</a> for the chart plugin</p>
